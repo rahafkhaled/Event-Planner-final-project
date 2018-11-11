@@ -11,7 +11,7 @@ First Page will be titled "Create Event" and will have:
 
 3-Number of people
 
-Second page will be titled "Event Regestration" and will have:
+Second page will be titled "Event Registration" and will have:
 
 1-Date/Time of event
 
