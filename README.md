@@ -3,7 +3,7 @@ An event planner based on a client-server model. This program is a container for
 The main libraries that will be used for this program are socket and Tkinter.
 The graphical user interface for this program is very interactive:
 First Page will be titled "Create Event" and will have:
-(Event name,
+Event name,
 Event Type,
 Number of people).
 Second page will be titled "Event Regestration" and will have:
