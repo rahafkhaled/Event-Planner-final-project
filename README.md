@@ -4,13 +4,19 @@ The main libraries that will be used for this program are socket and Tkinter.
 The graphical user interface for this program is very interactive:
 
 First Page will be titled "Create Event" and will have:
+
 1-Event name
+
 2-Event Type
+
 3-Number of people
 
 Second page will be titled "Event Regestration" and will have:
+
 1-Date/Time of event
+
 2-Host name
+
 3-Host's contact information
 
 Third page is the dashboard,this is where clients organize their events and manage parts of it. It contains:
