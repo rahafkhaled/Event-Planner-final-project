@@ -1,0 +1,3 @@
+/////Marriott*****Airport street(Reception,400,12000)(Ballroom,600,30000)(Banquet,80,2500)/////W****Al LuqtaHall1(Pool View,200,7500)/////Kingsgate ***Corniche
+Hall1(Banquet,140,1500)Hall2(Banquet,200,3000)
+//////
