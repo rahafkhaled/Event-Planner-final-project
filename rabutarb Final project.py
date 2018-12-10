@@ -7,7 +7,8 @@ import socket
 from Tkinter import *
 import tkMessageBox
 import ScrolledText
-#chat client
+import time
+#chat client helper functions
 def lengthOfMessage(message):
     if len(str(len(message)))==2:
         return "0"+str(len(message))
@@ -40,7 +41,7 @@ def openFiles(FileName):
     f.close()
     return fileContent
 
-########## FILL IN THE FUNCTIONS TO IMPLEMENT THE CLIENT ##########
+########## START OF CHAT CLIENT CODE ##########
 def StartConnection (IPAddress, PortNumber):
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.connect((IPAddress, PortNumber))
@@ -127,62 +128,7 @@ def login (s, username, password):
     else:
         return False
 
-def getUsers(s):
-    s.send("@users\n")
-    answer=s.recv(512)
-    #empty list to put active users in
-    Active=[]
-    #finds index of @users
-    userIndex=answer.find("@users@")
-    #returns the answer starting the number of users
-    number=answer[userIndex+7:]
-    #finds first @ after number
-    findFirstUser=number.find("@")
-    Users=number[findFirstUser+1:]
-    #checks if there are 0 users
-    if number[:findFirstUser]=="0":
-        return []
-    #returns a list of all users in 'Active'
-    else:
-       for i in range(int(number[:findFirstUser])):
-            index2=Users.find("@")
-            if index2==-1:
-                useri=Users
-            else:    
-                useri=Users[:index2]
-            Active.append(useri)
-            Users=Users[(index2+1):]
-    return Active
-
         
-
-def getFriends(s):
-    s.send("@friends\n")
-    answer=s.recv(512)
-    #empty list to put friends in
-    Friends=[]
-    #finds index of @users
-    userIndex=answer.find("@friends@")
-    #returns the answer starting the number of friends
-    number=answer[userIndex+9:]
-    #finds first @ after number
-    findFirstUser=number.find("@")
-    Users=number[findFirstUser+1:]
-    #checks if there are 0 users
-    if number[:findFirstUser]=="0":
-        return []
-    #returns a list of all users in 'Active'
-    else:
-       for i in range(int(number[:findFirstUser])):
-            index2=Users.find("@")
-            if index2==-1:
-                useri=Users
-            else:    
-                useri=Users[:index2]
-            Friends.append(useri)
-            Users=Users[(index2+1):]
-    return Friends
-    
 def sendFriendRequest(s, friend):
     #finds the size and converts it to a string
     size=str(6+len("@request@friend")+1+len(friend))
@@ -205,8 +151,7 @@ def acceptFriendRequest(s, friend):
         return True
     else:
         return False
- 
-
+    
 def sendMessage(s, friend, message):
     #finds the size and converts it to a string
     size=str(6+len("@sendmsg")+1+len(friend)+1+len(message))
@@ -231,32 +176,7 @@ def sendFile(s, friend, filename):
     else:
         return False
     
-def getRequests(s):
-    s.send("@rxrqst\n")
-    answer=s.recv(512)
-    #empty list to put friends in
-    Requests=[]
-    #finds index of @users
-    userIndex=6
-    #returns the answer starting the number of friends
-    number=answer[userIndex+1:]
-    #finds first @ after number
-    findFirstUser=number.find("@")
-    Users=number[findFirstUser+1:]
-    #checks if there are 0 users
-    if number[:findFirstUser]=="0":
-        return []
-    #returns a list of all users in 'Active'
-    else:
-       for i in range(int(number[:findFirstUser])):
-            index2=Users.find("@")
-            if index2==-1:
-                useri=Users
-            else:    
-                useri=Users[:index2]
-            Requests.append(useri)
-            Users=Users[(index2+1):]
-    return Requests
+
 
 def getMail(s):
     s.send("@rxmsg\n")
@@ -285,7 +205,8 @@ def getMail(s):
         return (messageList,fileList)
    
 
-
+########## END OF CHAT CLIENT CODE ##########
+########## START OF GUI ##########
 #First window
 class firstWindow:
     def __init__(self):
@@ -428,6 +349,9 @@ class loginWindowService:
         message=""
         s=self.connection
         username=self.userEntry.get()
+        f=open("temp2.txt","w")
+        f.write(username)
+        f.close()
         password=self.passEntry.get()
         sendMessage(self.connection,"rabutarb1","loginservice:usr:"+username+":passwrd:"+password+"\n")
         allMessages = getMail(s)
@@ -461,17 +385,13 @@ class signupOption:
         self.label1.grid()
         self.planner1Button=Button(self.window3,image=self.o1,command=self.plannerButton)
         self.planner1Button.place(x=497,y=230)
-        self.service1Button=Button(self.window3,image=self.o2,command=self.serviceButton)
-        self.service1Button.place(x=497,y=530)
         self.backButton=Button(self.window3,text="Go Back",command=self.backButton2)
         self.backButton.place(x=80,y=100)
         self.window3.mainloop()
     def plannerButton(self):
         self.window3.destroy()
         m=plannerSignup()
-    def serviceButton(self):
-        self.window3.destroy()
-        m=loginWindowService()
+
     def backButton2(self):
           self.window3.destroy()
           m=firstWindow()
@@ -486,7 +406,7 @@ class plannerSignup:
         width=self.window2.winfo_screenwidth()
         height=self.window2.winfo_screenheight() 
         self.window2.geometry("%dx%d+0+0"%(width,height))
-        self.window2.title("Login")
+        self.window2.title("Sign Up")
         self.label1=Label(self.window2,image=self.bg)
         self.label1.grid()
         self.signupButton=Button(self.window2,text="Sign Up",command=self.signupButton2)
@@ -515,17 +435,15 @@ class plannerSignup:
                 message=i[1]
             if message=="ok":
                 self.window2.destroy()
-                m=serviceDashboard()
+                m=clientDashboard()
             else:
                 tkMessageBox.showinfo("Error", "Username already exists.")
                 
     def backButton2(self):
           self.window2.destroy()
           m=signupOption()
+          
 
-
-
-    
  
 
 #Client's dashboard
@@ -539,13 +457,11 @@ class clientDashboard:
         self.window4.title("Dashboard")
         self.label1=Label(self.window4,image=self.bg)
         self.label1.grid()
-        self.profile = PhotoImage(file ="profile.gif")
-        self.profButton=Button(self.window4,image=self.profile)
-        self.profButton.place(x=1300,y=100)
         self.eventsLabel=Label(self.window4,text="EVENTS",bg="grey",fg="black")
         self.eventsLabel.place(x=689,y=200)
         self.eventBox=Listbox(self.window4)
         self.eventBox.place(x=630,y=240)
+        
         self.manageButton=Button(self.window4,text="Manage",bg="grey",fg="black",command=self.managing)
         self.manageButton.place(x=600,y=430)
         self.deleteButton=Button(self.window4,text="Delete",bg="grey",fg="black")
@@ -574,18 +490,15 @@ class serviceDashboard:
         self.window4.title("Dashboard")
         self.label1=Label(self.window4,image=self.bg)
         self.label1.grid()
-        self.profile = PhotoImage(file ="profile.gif")
-        self.profButton=Button(self.window4,image=self.profile)
-        self.profButton.place(x=1300,y=100)
         self.mail = PhotoImage(file ="mail.gif")
         self.mailButton=Button(self.window4,image=self.mail,command=self.mailButton2)
-        self.mailButton.place(x=500,y=300)
+        self.mailButton.place(x=600,y=300)
         self.window4.mainloop()
     def mailButton2(self):
         self.window4.destroy()
         m=chatWithClient()
 
-
+#View latest message
 class chatWithClient:
     def __init__(self):
         self.connection=StartConnection("86.36.46.10", 15112)
@@ -601,41 +514,42 @@ class chatWithClient:
         self.display=ScrolledText.ScrolledText(self.window5,width=80)
         self.display.place(x=400,y=300)
         #recieving
-        allMessages = getMail(s)
+        message=""
+        allMessages = getMail(self.connection)
         allMessages=allMessages[0]
         if allMessages!=[]:
             for i in allMessages:
                 message=i[1]
+        f=open("temp2.txt","r")
+        hotel2=f.read()
+        f.close()
         mList=message.split("-")
-        self.display.insert(Tkinter.END,"User:"+mList[0]+"\n")
-        self.display.insert(Tkinter.END,"Type of event:"+mList[1]+"\n")
-        self.display.insert(Tkinter.END,"Date:"+mList[2]+"\n")
-        self.display.insert(Tkinter.END,"Time:"+mList[3]+"\n")
-        self.display.insert(Tkinter.END,"Capacity:"+mList[4]+"\n")
+        
+        if mList[0].lower()==hotel2.lower():
+            self.display.insert(END,"User:"+mList[1]+"\n")
+            self.display.insert(END,"Type of event:"+mList[2]+"\n")
+            self.display.insert(END,"Date:"+mList[3]+"\n")
+            self.display.insert(END,"Time:"+mList[4]+"\n")
+            self.display.insert(END,"Capacity:"+mList[5]+"\n")
+        else:
+            self.display.insert(END,"No Requests")
         #Your messages
-        self.messageEntry=Tkinter.Entry(self.window5,width=40)
+        self.messageEntry=Entry(self.window5,width=40)
         self.messageEntry.place(x=470,y=470)
-        #Send button
-        self.send=Tkinter.Button(self.window5,text="Send",command=lambda: self.sendButton(self.connection))
-        self.send.place(x=470,y=320)
+        self.backButton=Button(self.window5,text="Go Back",command=self.backButton2)
+        self.backButton.place(x=80,y=100)
         self.window5.mainloop()
-        
-    def sendButton(self, s):
-        self.display.insert(Tkinter.END,"me:"+self.messageEntry.get()+"\n")
-        sendMessage(s,self.friend,self.messageEntry.get())
-        self.messageEntry.delete(0,Tkinter.END)
-
-        
-        
-                
+    def backButton2(self):
+        self.window5.destroy()
+        m=serviceDashboard()
         
 
-
-        
+       
 #create new event
 class createEvent:
      def __init__(self):
         self.window5=Tk()
+        self.info = []
         self.bg = PhotoImage(file ="createevent.gif")
         width=self.window5.winfo_screenwidth()
         height=self.window5.winfo_screenheight() 
@@ -705,6 +619,8 @@ class createEvent:
         #Submit Button
         self.submitButton=Button(self.window5,text="SUBMIT",bg="grey",fg="black",command=self.submitting)
         self.submitButton.place(x=950,y=600)
+        self.backButton=Button(self.window5,text="Go Back",command=self.backButton2)
+        self.backButton.place(x=80,y=100)
         self.window5.mainloop()
      def daysOf(self):
          list1=[]
@@ -717,18 +633,17 @@ class createEvent:
              list2.append(i)
          return list2
      def tempFolder(self):
-         info=[]
+         self.info=[]
          typeOfEvent=self.variable.get()+"\n"
-         info.append(typeOfEvent)
+         self.info.append(typeOfEvent)
          capacity=self.numberEntry.get()+"\n"
-         info.append(capacity)
+         self.info.append(capacity)
          date=self.dayVariable.get()+"/"+self.monthVariable.get()+"/"+self.yearEntry.get()+"\n"
-         info.append(date)
+         self.info.append(date)
          time=self.timeEntryBox1.get()+"."+self.timeEntryBox2.get()+"\n"
-         info.append(time)
-         
+         self.info.append(time)
          f=open("temp.txt","w")
-         f.writelines(info)
+         f.writelines(self.info)
          f.close()
      def submitting(self):
          self.tempFolder()
@@ -738,16 +653,15 @@ class createEvent:
          self.window5.destroy()
          m=clientDashboard()
 
-         
+
 
 #manage existing event
 class eventMenu:
      def __init__(self):
         self.window6=Tk()
-        self.bg = PhotoImage(file ="manageevent.gif")
+        self.bg = PhotoImage(file ="manage2.gif")
         self.v = PhotoImage(file ="venuebutton.gif")
         self.c = PhotoImage(file ="cateringbutton.gif")
-        self.f = PhotoImage(file ="flowersbutton.gif")
         self.g = PhotoImage(file ="guestbutton.gif")
         width=self.window6.winfo_screenwidth()
         height=self.window6.winfo_screenheight() 
@@ -759,10 +673,10 @@ class eventMenu:
         self.button1.place(x=330,y=400)
         self.button2=Button(self.window6,image=self.c,command=self.cateringSelect)
         self.button2.place(x=940,y=400)
-        self.button3=Button(self.window6,image=self.f)
-        self.button3.place(x=330,y=730)
-        self.button3=Button(self.window6,image=self.g)
-        self.button3.place(x=940,y=730)
+        self.button3=Button(self.window6,image=self.g,command=self.guestSelect)
+        self.button3.place(x=625,y=730)
+        self.backButton=Button(self.window6,text="Go Back",command=self.backButton2)
+        self.backButton.place(x=80,y=100)
         self.window6.mainloop()
      def venueSelect(self):
          self.window6.destroy()
@@ -770,8 +684,48 @@ class eventMenu:
      def cateringSelect(self):
          self.window6.destroy()
          m=catering()
+     def guestSelect(self):
+         self.window6.destroy()
+         m=guestList()
+     def backButton2(self):
+         self.window6.destroy()
+         m=createEvent()
 
-#venue form         
+
+
+#guest list
+class guestList:
+    def __init__(self):
+        self.window4=Tk()
+        self.bg = PhotoImage(file ="PIC2.gif")
+        width=self.window4.winfo_screenwidth()
+        height=self.window4.winfo_screenheight() 
+        self.window4.geometry("%dx%d+0+0"%(width,height))
+        self.window4.title("Dashboard")
+        self.label1=Label(self.window4,image=self.bg)
+        self.label1.grid()
+        self.display=ScrolledText.ScrolledText(self.window4,width=150)
+        self.display.place(x=140,y=50)
+        self.guestEntry=Entry(self.window4,width=20)
+        self.guestEntry.place(x=150,y=450)
+        self.send=Button(self.window4,text="Add",command=self.sendButton)
+        self.send.place(x=350,y=450)
+        f=open("temp.txt","r")
+        info2=f.readlines()
+        guests=info2[1]
+        f.close()
+        self.backButton=Button(self.window4,text="Go Back",command=self.backButton2)
+        self.backButton.place(x=80,y=100)
+        self.window4.mainloop()
+        
+    def sendButton(self):
+        self.display.insert(END,self.guestEntry.get()+"\n")
+        self.messageEntry.delete(0,END)
+    def backButton2(self):
+        self.window4.destroy()
+        m=eventMenu()
+        
+#venue form
 class venue:
     def __init__(self):#capacity
         self.connection=StartConnection("86.36.46.10", 15112)
@@ -842,10 +796,14 @@ class venue:
         #submit button
         submitButton=Button(self.window5,text="Submit",command=self.submitButton2)
         submitButton.place(x=920,y=672)
+        self.backButton=Button(self.window5,text="Go Back",command=self.backButton2)
+        self.backButton.place(x=80,y=100)
         #hotels results
         self.window5.mainloop()
         
-        
+    def backButton2(self):
+        self.window5.destroy()
+        m=eventMenu()
     def submitButton2(self):
         message=""
         typesM=""
@@ -891,7 +849,7 @@ class venue:
 
   
      
-
+#What you got as a result from your form and pick a venue
 class hotelWindow:
     def __init__(self,rating,location,types,capacity,price):
         self.connection=StartConnection("86.36.46.10", 15112)
@@ -973,7 +931,7 @@ class hotelWindow:
                 self.budgetBox.insert(END,self.budget[r])
         self.window5.mainloop()
         #rating button
-    def gettingInfo():
+    def gettingInfo(self):
             info=[]
             f=open("temp.txt","r")
             info=f.readlines()
@@ -984,83 +942,76 @@ class hotelWindow:
             y.close()
             return info
     def ratingButton2(self):
-##        s=self.connection
-          hotel=self.ratingBox.get(self.ratingBox.curselection())
-##        m=self.gettingInfo
-##        username1=listInfo[4]
-##        date1=listInfo[2]
-##        time1=listInfo[3]
-##        type1=listInfo[0]
-##        capacity1=listInfo[1]
-          if tkMessageBox.askyesno("Send the venue a request","Do you want to send "+hotel+" a request?"):
-             tkMessageBox.showinfo("Sucess","Your request has been sent. Please wait for the service provider to reply in the next 3 hours.")
+        s=self.connection
+        hotel=self.ratingBox.get(self.ratingBox.curselection())
+        m=self.gettingInfo()
+        username1=m[4]
+        date1=m[2]
+        time1=m[3]
+        type1=m[0]
+        capacity1=m[1]
+        if tkMessageBox.askyesno("Send the venue a request","Do you want to send "+hotel+" a request?"):
+             sendMessage(s,"rabutarb1","hotel:"+hotel+":usrname:"+username1+":date:"+date1+":time:"+time1+":type:"+type1+":capacity:"+capacity1)
+             tkMessageBox.showinfo("Success","Your request has been sent. Please wait for the service provider to reply in the next 3 hours.")
     def locationButton2(self):
         s=self.connection
         hotel=self.locationBox.get(self.locationBox.curselection())
-##        m=self.gettingInfo
-##        username1=listInfo[4]
-##        date1=listInfo[2]
-##        time1=listInfo[3]
-##        type1=listInfo[0]
-##        capacity1=listInfo[1]
+        m=self.gettingInfo()
+        username1=m[4]
+        date1=m[2]
+        time1=m[3]
+        type1=m[0]
+        capacity1=m[1]
         if tkMessageBox.askyesno("Send the venue a request","Do you want to send "+hotel+" a request?"):
- #           sendMessage(s,"rabutarb1",hotel+":usrname:"+username1+":date:"+date1+":time:"+time1+":type:"+type1+":capacity:"+capacity1)
+            sendMessage(s,"rabutarb1","hotel:"+hotel+":usrname:"+username1+":date:"+date1+":time:"+time1+":type:"+type1+":capacity:"+capacity1)
             tkMessageBox.showinfo("Sucess","Your request has been sent. Please wait for the service provider to reply in the next 3 hours.")
     def typeButton2(self):
         s=self.connection
         hotel=self.typeBox.get(self.typeBox.curselection())
-##        listInfo=self.gettingInfo
-##        username1=listInfo[4]
-##        date1=listInfo[2]
-##        time1=listInfo[3]
-##        type1=listInfo[0]
-##        capacity1=listInfo[1]
+        listInfo=self.gettingInfo()
+        username1=m[4]
+        date1=m[2]
+        time1=m[3]
+        type1=m[0]
+        capacity1=m[1]
         if tkMessageBox.askyesno("Send the venue a request","Do you want to send "+hotel+" a request?"):
- #           sendMessage(s,"rabutarb1",hotel+":usrname:"+username1+":date:"+date1+":time:"+time1+":type:"+type1+":capacity:"+capacity1)
+            sendMessage(s,"rabutarb1","hotel:"+hotel+":usrname:"+username1+":date:"+date1+":time:"+time1+":type:"+type1+":capacity:"+capacity1)
             tkMessageBox.showinfo("Sucess","Your request has been sent. Please wait for the service provider to reply in the next 3 hours.")
     def capacityButton2(self):
         s=self.connection
         hotel=self.capacityBox.get(self.capacityBox.curselection())
-##        m=self.gettingInfo
-##        username1=listInfo[4]
-##        date1=listInfo[2]
-##        time1=listInfo[3]
-##        type1=listInfo[0]
-##        capacity1=listInfo[1]
+        m=self.gettingInfo()
+        username1=m[4]
+        date1=m[2]
+        time1=m[3]
+        type1=m[0]
+        capacity1=m[1]
         if tkMessageBox.askyesno("Send the venue a request","Do you want to send "+hotel+" a request?"):
- #           sendMessage(s,"rabutarb1",hotel+":usrname:"+username1+":date:"+date1+":time:"+time1+":type:"+type1+":capacity:"+capacity1)
-            tkMessageBox.showinfo("Sucess","Your request has been sent. Please wait for the service provider to reply in the next 3 hours.")
+            sendMessage(s,"rabutarb1","hotel:"+hotel+":usrname:"+username1+":date:"+date1+":time:"+time1+":type:"+type1+":capacity:"+capacity1)
+            tkMessageBox.showinfo("Success","Your request has been sent. Please wait for the service provider to reply in the next 3 hours.")
     def budgetButton2(self):
         s=self.connection
         hotel=self.budgetBox.get(self.budgetBox.curselection())
-##        m=self.gettingInfo
-##        username1=listInfo[4]
-##        date1=listInfo[2]
-##        time1=listInfo[3]
-##        type1=listInfo[0]
-##        capacity1=listInfo[1]
+        m=self.gettingInfo()
+        username1=m[4]
+        date1=m[2]
+        time1=m[3]
+        type1=m[0]
+        capacity1=m[1]
         if tkMessageBox.askyesno("Send the venue a request","Do you want to send "+hotel+" a request?"):
- #           sendMessage(s,"rabutarb1",hotel+":usrname:"+username1+":date:"+date1+":time:"+time1+":type:"+type1+":capacity:"+capacity1)
-            tkMessageBox.showinfo("Sucess","Your request has been sent. Please wait for the service provider to reply in the next 3 hours.")
+            sendMessage(s,"rabutarb1","hotel:"+hotel+":usrname:"+username1+":date:"+date1+":time:"+time1+":type:"+type1+":capacity:"+capacity1)
+            tkMessageBox.showinfo("Success","our request has been sent. Please wait for the service provider to reply in the next 3 hours.")
+
 
         
         
-        
-            
-
-
-#hotelWindow()
-
-        
-                
-                
-
-
 
 
 #catering form
 class catering:
     def __init__(self):
+        self.connection=StartConnection("86.36.46.10", 15112)
+        login (self.connection, "rabutarb2", "rabutarb")
         self.window5=Tk()
         self.bg = PhotoImage(file ="PIC2.gif")
         self.c = PhotoImage(file ="cateringbutton.gif")
@@ -1074,7 +1025,7 @@ class catering:
         self.titleLabel.place(x=640,y=70)
         self.selectLabel=Label(self.window5,text="Specify your catering specifications!")
         self.selectLabel.place(x=400,y=200)
-        #venue selection
+        #cuisine selection
         self.hotelLabel=Label(self.window5,text="Is there a specific type of cuisine?")
         self.hotelLabel.place(x=420,y=272)
         self.venueOptions= [
@@ -1092,28 +1043,172 @@ class catering:
         self.w = apply(OptionMenu, (self.window5, self.variable) + tuple(self.venueOptions))
         self.w.config(width=20)
         self.w.place(x=720,y=272)
-        #Budget
-        self.budgetLabel=Label(self.window5,text="What is your budget for the venue?")
-        self.budgetLabel.place(x=420,y=372)
-        self.budgetEntry=Entry(self.window5)
-        self.budgetEntry.place(x=720,y=372)
+        #rating
+        self.ratingLabel=Label(self.window5,text="Rating")
+        self.ratingLabel.place(x=420,y=372)
+        self.ratingOptions= [
+            "*",
+            "**",
+            "***",
+            "****",
+            "*****"
+        ]
+        self.variable2 = StringVar(self.window5)
+        self.variable2.set("select a rating") # default value
+        self.w2 = apply(OptionMenu, (self.window5, self.variable2) + tuple(self.ratingOptions))
+        self.w2.config(width=20)
+        self.w2.place(x=720,y=372)
         #Allergies
-        self.noLabel=Label(self.window5,text="Any allergies or type of food you don't want at your event?")
-        self.noLabel.place(x=320,y=472)
-        self.noEntry=Entry(self.window5)
-        self.noEntry.place(x=720,y=472)
+        self.allerLabel=Label(self.window5,text="Any allergies or type of food you don't want at your event?")
+        self.allerLabel.place(x=520,y=572)
+        self.allerEntry=Entry(self.window5)
+        self.allerEntry.place(x=620,y=642)
+        #submit button
+        submitButton=Button(self.window5,text="Submit",command=self.submitButton2)
+        submitButton.place(x=920,y=672)
+        self.backButton=Button(self.window5,text="Go Back",command=self.backButton2)
+        self.backButton.place(x=80,y=100)
         self.window5.mainloop()
+    def backButton2(self):
+        self.window5.destroy()
+        m=eventMenu()
+    def submitButton2(self):
+        message=""
+        cuisineM=""
+        ratingM=""
+        capacityM=""
+        allergiesM=""
+        s=self.connection
+        cuisineM=self.variable.get()
+        ratingM=self.variable2.get()
+        allergiesM=self.allerEntry.get()
+        f=open("temp.txt","r")
+        info2=f.readlines()
+        guests=info2[1]
+        f.close()
+        sendMessage(self.connection,"rabutarb1","catering:cuisine:"+cuisineM+":rating:"+ratingM+":capacity:"+guests+":allergies:"+allergiesM+"\n")
+        allMessages = getMail(s)
+        allMessages=allMessages[0]
+        if allMessages!=[]:
+            for i in allMessages:
+                message=i[1]
+                if "Cuisine" in message:
+                    colonIndex=message.find(":")
+                    cuisineM=message[colonIndex+1:]
+                if "Rating" in message:
+                    colonIndex=message.find(":")
+                    ratingM=message[colonIndex+1:]
+                if "Capacity" in message:
+                    colonIndex=message.find(":")
+                    capacityM=message[colonIndex+1:]
+            m=cuisineWindow(cuisineM,ratingM,capacityM,allergiesM)
+            return m
+
+#catering results
+class cuisineWindow:
+    def __init__(self,cuisine,rating,capacity,allergies):
+            self.connection=StartConnection("86.36.46.10", 15112)
+            login (self.connection, "rabutarb2", "rabutarb")
+            self.window5=Toplevel()
+            self.bg = PhotoImage(file ="makechoice.gif")
+            self.width=self.window5.winfo_screenwidth()
+            self.height=self.window5.winfo_screenheight() 
+            self.window5.geometry("%dx%d+0+0"%(self.width,self.height))
+            self.window5.title("Cuisine")
+            self.label1=Label(self.window5,image=self.bg)
+            self.label1.grid()
+            #boxes
+            #values
+            self.cuisine=cuisine.split("-")
+            self.rating=rating.split("-")
+            self.capacity=capacity.split("-")
+            #cuisine
+            cuisineLabel=Label(self.window5,text="Cuisine")
+            cuisineLabel.place(x=260,y=180)
+            cuisineButton=Button(self.window5,text="Select",command=self.cuisineButton2)
+            cuisineButton.place(x=260,y=380)
+            self.cuisineBox=Listbox(self.window5)
+            self.cuisineBox.place(x=200,y=200)
+            if self.cuisine==[ ]:
+                self.ratingBox.insert(END,"No results for this cuisine")
+            else:
+                for r in range(len(self.cuisine)):
+                    self.cuisineBox.insert(END,self.cuisine[r])
+            #rating
+            ratingLabel=Label(self.window5,text="Rating")
+            ratingLabel.place(x=660,y=180)
+            ratingButton=Button(self.window5,text="Select",command=self.ratingButton2)
+            ratingButton.place(x=660,y=380)
+            self.ratingBox=Listbox(self.window5)
+            self.ratingBox.place(x=600,y=200)
+            if self.rating==[]:
+                self.ratingBox.insert(END,"No results for this rating")
+            else:
+                for r in range(len(self.rating)):
+                    self.ratingBox.insert(END,self.rating[r])
+   
+            #capacity
+            capacityLabel=Label(self.window5,text="Capacity")
+            capacityLabel.place(x=460,y=380)
+            capacityButton=Button(self.window5,text="Select",command=self.capacityButton2)
+            capacityButton.place(x=460,y=580)
+            self.capacityBox=Listbox(self.window5)
+            self.capacityBox.place(x=400,y=400)
+            if self.capacity==[]:
+                self.capacityBox.insert(END,"No results for this capacity")
+            else:
+                for r in range(len(self.capacity)):
+                    self.capacityBox.insert(END,self.capacity[r])
+            self.window5.mainloop()
+            
+    def gettingInfo(self):
+            info=[]
+            f=open("temp.txt","r")
+            info=f.readlines()
+            f.close()
+            y=open("username.txt","r")
+            info2=y.readline()
+            info.append(info2)
+            y.close()
+            return info
+    def ratingButton2(self):
+            s=self.connection
+            cater=self.ratingBox.get(self.ratingBox.curselection())
+            m=self.gettingInfo()
+            username1=m[4]
+            date1=m[2]
+            time1=m[3]
+            type1=m[0]
+            capacity1=m[1]
+            if tkMessageBox.askyesno("Send the catering service a request","Do you want to send "+hotel+" a request?"):
+                 sendMessage(s,"rabutarb1","restu:"+cater+":usrname:"+username1+":date:"+date1+":time:"+time1+":type:"+type1+":capacity:"+capacity1)
+                 tkMessageBox.showinfo("Success","Your request has been sent. Please wait for the service provider to reply in the next 3 hours.")
+    def cuisineButton2(self):
+            s=self.connection
+            cater=self.cuisineBox.get(self.cuisineBox.curselection())
+            m=self.gettingInfo()
+            username1=m[4]
+            date1=m[2]
+            time1=m[3]
+            type1=m[0]
+            capacity1=m[1]
+            if tkMessageBox.askyesno("Send the catering service a request","Do you want to send "+cater+" a request?"):
+                 sendMessage(s,"rabutarb1","restu:"+cater+":usrname:"+username1+":date:"+date1+":time:"+time1+":type:"+type1+":capacity:"+capacity1)
+                 tkMessageBox.showinfo("Success","Your request has been sent. Please wait for the service provider to reply in the next 3 hours.")
+
+    def capacityButton2(self):
+            s=self.connection
+            cater=self.capacityBox.get(self.capacityBox.curselection())
+            m=self.gettingInfo()
+            username1=m[4]
+            date1=m[2]
+            time1=m[3]
+            type1=m[0]
+            capacity1=m[1]
+            if tkMessageBox.askyesno("Send the catering service a request","Do you want to send "+cater+" a request?"):
+                 sendMessage(s,"rabutarb1","restu:"+cater+":usrname:"+username1+":date:"+date1+":time:"+time1+":type:"+type1+":capacity:"+capacity1)
+                 tkMessageBox.showinfo("Success","Your request has been sent. Please wait for the service provider to reply in the next 3 hours.")
 
 
-#hotelWindow()       
-#venue()
-#createEvent()                      
+
 firstWindow()
-#optionLogin()
-#plannerSignup()
-#createEvent()
-#####Things that still need to be done with the GUI:
-##Signup pages
-##Flower+guest list planner
-##More Options
-##Service providers dashboard

@@ -13,6 +13,7 @@
 
 import socket
 import Tkinter
+import pickle
 
 ########## USE THIS SPACE TO WRITE YOUR HELPER FUNCTIONS ##########
 #Checks if length of message is 2 integers then adds a preceding 0
@@ -135,86 +136,6 @@ def login (s, username, password):
         return True
     else:
         return False
-
-def getUsers(s):
-    s.send("@users\n")
-    answer=s.recv(1024)
-    #empty list to put active users in
-    Active=[]
-    #finds index of @users
-    userIndex=answer.find("@users@")
-    #returns the answer starting the number of users
-    number=answer[userIndex+7:]
-    #finds first @ after number
-    findFirstUser=number.find("@")
-    Users=number[findFirstUser+1:]
-    #checks if there are 0 users
-    if number[:findFirstUser]=="0":
-        return []
-    #returns a list of all users in 'Active'
-    else:
-       for i in range(int(number[:findFirstUser])):
-            index2=Users.find("@")
-            if index2==-1:
-                useri=Users
-            else:    
-                useri=Users[:index2]
-            Active.append(useri)
-            Users=Users[(index2+1):]
-    return Active
-
-        
-
-def getFriends(s):
-    s.send("@friends\n")
-    answer=s.recv(1024)
-    #empty list to put friends in
-    Friends=[]
-    #finds index of @users
-    userIndex=answer.find("@friends@")
-    #returns the answer starting the number of friends
-    number=answer[userIndex+9:]
-    #finds first @ after number
-    findFirstUser=number.find("@")
-    Users=number[findFirstUser+1:]
-    #checks if there are 0 users
-    if number[:findFirstUser]=="0":
-        return []
-    #returns a list of all users in 'Active'
-    else:
-       for i in range(int(number[:findFirstUser])):
-            index2=Users.find("@")
-            if index2==-1:
-                useri=Users
-            else:    
-                useri=Users[:index2]
-            Friends.append(useri)
-            Users=Users[(index2+1):]
-    return Friends
-      
-    
-def sendFriendRequest(s, friend):
-    #finds the size and converts it to a string
-    size=str(6+len("@request@friend")+1+len(friend))
-    size2=lengthOfSize(size)
-    s.send("@"+size2+"@request@friend"+"@"+friend)
-    answer=s.recv(512)
-    if "ok" in answer: 
-        return True
-    else:
-        return False
-  
-
-def acceptFriendRequest(s, friend):
-    #finds the size and converts it to a string
-    size=str(6+len("@accept@friend")+1+len(friend))
-    size2=lengthOfSize(size)
-    s.send("@"+size2+"@accept@friend"+"@"+friend)
-    answer=s.recv(512)
-    if "@ok" in answer:
-        return True
-    else:
-        return False
  
 
 def sendMessage(s, friend, message):
@@ -239,34 +160,6 @@ def sendFile(s, friend, filename):
     else:
         return False
 
-def getRequests(s):
-    s.send("@rxrqst\n")
-    answer=s.recv(1024).strip()
-    #empty list to put friends in
-    Requests=[]
-    #finds index of @users
-    userIndex=6
-    #returns the answer starting the number of friends
-    number=answer[userIndex+1:]
-    #finds first @ after number
-    findFirstUser=number.find("@")
-    Users=number[findFirstUser+1:]
-    #checks if there are 0 users
-    if number[:7]=="0":
-        return []
-    #returns a list of all users in 'Active'
-    else:
-       for i in range(int(number[:findFirstUser])):
-            index2=Users.find("@")
-            if index2==-1:
-                useri=Users
-            else:    
-                useri=Users[:index2]
-            Requests.append(useri)
-            Users=Users[(index2+1):]
-    return Requests
-    
-    
 
 def getMail(s):
     s.send("@rxmsg\n")
@@ -300,50 +193,7 @@ def getMail(s):
         
    
    
-    
- 
-########## CLIENT PROGRAM HELPER FUNCTIONS: CHANGE ONLY IF NEEDED ##########
-def PrintUsage(s):
-    print ">> Menu:"
-    print "     Menu            Shows a Menu of acceptable commands"
-    print "     Users           List all active users"
-    print "     Friends         Show your current friends"
-    print "     Add Friend      Send another friend a friend request"
-    print "     Send Message    Send a message to a friend"
-    print "     Send File       Send a file to a friend"
-    print "     Requests        See your friend requests"
-    print "     Messages        See the new messages you recieved"
-    print "     Score           Print your current score"
-    print "     Exit            Exits the chat client"
-    
-def ShowUsers(s):
-    Users = getUsers(s)
-    if Users == []:
-        print ">> There are currently no active users"
-    else:
-        print ">> Active users:"
-        for u in Users:
-            print "     " + u
-    
-def ShowFriends(s):
-    Friends = getFriends(s)
-    if Friends == []:
-        print ">> You currently have no friends"
-    else:
-        print ">> Your friends:"
-        for f in Friends:
-            print "     " + f
-    
-def AddFriend(s):
-    friend = raw_input("Please insert the username of the user you would like to add as a friend: ")
-    if sendFriendRequest(s, friend): print friend, "added succesfully"
-    else: "Error adding " + friend + ". Please try again."
-    
-def AcceptFriend(s):
-    friend = raw_input("Please insert the username of the user you would like to accept as a friend: ")
-    if acceptFriendRequest(s, friend): print "Request from " + friend + " accepted succesfully"
-    else: "Error accepting request from " + friend + ". Please try again." 
-    
+
 def SendMessage(s):
     friend = raw_input("Please insert the username of the friend you would like to message: ")
     message = raw_input("Please insert the message that you would like to send: ")
@@ -352,77 +202,11 @@ def SendMessage(s):
         else: "Error sending message to " + friend + ". Please try again."
     else: print friend, "is not a Friend. You must add them as a friend before you can message them."
 
-def SendFile(s):
-    friend = raw_input("Please insert the username of the friend you would like to mail a file: ")
-    filename = raw_input("Please insert the name of the file you'd like to send: ")
-    if friend in getFriends(s):
-        if sendFile(s, friend, filename): print "File sent to " + friend + " succesfully"
-        else: "Error sending file to " + friend + ". Please try again."
-    else: print friend, "is not a Friend. You must add them as a friend before you can send them a file."
 
-    
-def ShowRequests(s):
-    Requests = getRequests(s)
-    if Requests == []:
-        print ">> You currently have no friend requests"
-    else:
-        print ">> The following users have asked to be your friends:"
-        for r in Requests:
-            print "     " + r
-    
-##def ShowMessages(s):
-##    (Messages, Files) = getMail(s)
-##    if Messages == []:
-##        print ">> You have no new messages"
-##    else:
-##        print ">> You have recieved the following messages:"
-##        for (u, m) in Messages:
-##            print "     " + u + " says: " + m
-##    if Files == []:
-##        print ">> You have no new files"
-##    else:
-##       print ">> You also recieved the following Users:"
-##       for (u, f) in Files:
-##            print "File " + f +" recieved from: " + u + " and downloaded successfully."
-
-def ShowScore(s):
-    s.send("@00008@getscore\n")
-    data = s.recv(512)
-    score = data.split('@')[1]
-    print "Your Score:", score
-
-##########  MAIN CODE, CHANGE ONLY IF ABSOLUTELY NECCESSARY  ##########
-# Connect to the server at IP Address 86.36.35.17
-# and port number 15112
-#socket = StartConnection("86.36.46.10", 15112)
-
-# Ask the user for their login name and password
-##username = raw_input(">> Login as: ")
-##if ("Exit" == username) : exit()
-##
-##password = raw_input(">> Password: ")
-##if ("Exit" == password) : exit()
 username="rabutarb1"
 password="rabutarb"
-# Run authentication
-# Ask for username and password again if incorrect
-##while not login (socket, username, password):
-##    print ">> Incorrect Username/Password Combination!"
-##    print ">> Please try again, or type 'Exit' to close the application."
-##    username = raw_input(">> Login as: ")
-##    if ("Exit" == username) : exit()
-##    password = raw_input(">> Password: ")
-##    if ("Exit" == password) : exit()
 
-
- 
-##global window
-##window=Tkinter.Tk()
-##window.title("Running")
 s=StartConnection("86.36.46.10", 15112)
-##validateLogin(s)
-##
-##window.mainloop()
 login(s,"rabutarb1","rabutarb")
     
 allMessages=[]
@@ -439,15 +223,17 @@ def validateLogin(s,message1):
             for line in f:
                 if line.strip()==fullUserAndPass:
                    return sendMessage(s,"rabutarb2","Yes")
+            f.close()
             return sendMessage(s,"rabutarb2","No")
+            
                 
         elif message[:12]=="loginservice":
             f=open("serviceaccounts.txt","r")
             for line in f:
                 if line.strip()==fullUserAndPass:
                     return sendMessage(s,"rabutarb2","Yes")
-                else:
-                    return sendMessage(s,"rabutarb2","No")
+            f.close()
+            return sendMessage(s,"rabutarb2","No")
 
 #helper function that checks if the username already exists
 def ifExists(username):
@@ -477,6 +263,7 @@ def signUp(s,message1):
                 return sendMessage(s,"rabutarb2","ok")
 
 
+#get message from user with specifications of venue,send back results that match
 def venue(s,message1):
         message=message1
        #message decoded
@@ -497,74 +284,79 @@ def venue(s,message1):
             content = f.read().splitlines()
         List=[l.split(',') for l in ','.join(content).split('/////')]
         for i in List:
-                for j in i:
-                        if len(j)<1:
-                                i.remove(j)
+            for j in i:
+                if len(j)<1:
+                    i.remove(j)
         for i in List:
-                if i==[]:
-                        List.remove(i)
+            if i==[]:
+                List.remove(i)
         List.pop(-1)
+        
         hotelList=[]
         names=""
         for i in List:
-                for j in i:
-                        if actualType in j:
-                                if i[0] not in hotelList:
-                                        hotelList.append(i[0])
-                                        names="-".join(hotelList)
+            for j in i:
+                if actualType in j:
+                    if i[0] not in hotelList:
+                        hotelList.append(i[0])
+                        names="-".join(hotelList)
         sendMessage(s,"rabutarb2","Types:"+names)
         
         hotelList=[]
         names=""
         for i in List:
-                for j in i:
-                        if actualRating in j:
-                                if i[0] not in hotelList:
-                                        hotelList.append(i[0])
-                                        names="-".join(hotelList)
+            for j in i:
+                if actualRating in j:
+                    if i[0] not in hotelList:
+                        hotelList.append(i[0])
+                        names="-".join(hotelList)
         sendMessage(s,"rabutarb2","Rating:"+names)
         
       
         hotelList=[]
         names=""
         for i in List:
-                for j in i:
-                        if actualLocation in j:
-                                if i[0] not in hotelList:
-                                        hotelList.append(i[0])
-                                        names="-".join(hotelList)
+            for j in i:
+                if actualLocation in j:
+                    if i[0] not in hotelList:
+                        hotelList.append(i[0])
+                        names="-".join(hotelList)
         sendMessage(s,"rabutarb2","Location:"+names)
         
         hotelList=[]
         names=""
         for i in List:
-                for j in i:
-                        if j.isdigit():
-                                cap=int(j)
-                                if (int(actualCapacity)-100)<=cap<=(int(actualCapacity)+100):
-                                        if i[0] not in hotelList:
-                                                hotelList.append(i[0])
-                                                names="-".join(hotelList)
+            for j in i:
+                if j.isdigit():
+                    cap=int(j)
+                    if (int(actualCapacity)-100)<=cap<=(int(actualCapacity)+100):
+                        if i[0] not in hotelList:
+                            hotelList.append(i[0])
+                            names="-".join(hotelList)
         sendMessage(s,"rabutarb2","Capacity:"+names)
        
         hotelList=[]
         names=""
         for i in List:
-                for j in i:
-                        if j.isdigit():
-                                eIndex=i.index(j)
-                                bud=int(i[eIndex+1][:-1])
-                                if (int(actualBudget)-100)<=bud<=(int(actualBudget)+100):
-                                        if i[0] not in hotelList:
-                                                hotelList.append(i[0])
-                                                names="-".join(hotelList)
+            for j in i:
+                if j.isdigit():
+                    eIndex=i.index(j)
+                    bud=int(i[eIndex+1][:-1])
+                    if (int(actualBudget)-100)<=bud<=(int(actualBudget)+100):
+                        if i[0] not in hotelList:
+                            hotelList.append(i[0])
+                            names="-".join(hotelList)
 
         return sendMessage(s,"rabutarb2","Budget:"+names)
-                                        
+
+#Sending a message with all info about event to hotels                                       
 def hotels(s,message1):
     message=message1
     #message decoded
-    username2=message[14:]
+    hotel2=message[6:]
+    findColonBeforeUsername=hotel2.find(":")
+    actualHotel=hotel2[:findColonBeforeUsername]
+    username2=message[15+len(actualHotel):]
     findColonBeforeDate=username2.find(":")
     actualUsername=username2[:findColonBeforeDate]
     date2=username2[findColonBeforeDate+6:]
@@ -578,9 +370,97 @@ def hotels(s,message1):
     actualType=type2[:findColonBeforeCapacity]
     actualCapacity=type2[findColonBeforeCapacity+10:]
     #send message to service provider
-    mList=[actualUsername,actualType,actualDate,actualTime,actualCapacity]
+    mList=[actualHotel,actualUsername,actualType,actualDate,actualTime,actualCapacity]
     mString="-".join(mList)
     return sendMessage(s,"rabutarb3",mString)
+
+
+def catering(s,message1):
+    message=message1
+    #message decoded
+    cuisine1=message[17:]
+    findColonBeforeRating=cuisine1.find(":")
+    actualCuisine=cuisine1[:findColonBeforeRating]
+    rating1=cuisine1[len(actualCuisine)+8:]
+    findColonBeforeBudget=rating1.find(":")
+    actualRating=rating1[:findColonBeforeBudget]
+    capacity1=rating1[len(actualRating)+10:]
+    findColonBeforeAller=capacity1.find(":")
+    actualCapacity=capacity1[:findColonBeforeAller]
+    actualAller=capacity1[len(actualCapacity)+11:]
+
+    with open("food.txt") as f:
+        content = f.read().splitlines()
+    List=[l.split(',') for l in ','.join(content).split('/////')]
+    for i in List:
+        for j in i:
+            if len(j)<1:
+                i.remove(j)
+    for i in List:
+        if i==[]:
+            List.remove(i)
+    List.pop(-1)
+    
+    foodList=[]
+    names=""
+    for i in List:
+        for j in i:
+            if actualCuisine in j:
+                if i[0] not in foodList:
+                    foodList.append(i[0])
+                        names="-".join(foodList)
+    
+    sendMessage(s,"rabutarb2","Cuisine:"+names)
+       
+    foodList=[]
+    names=""
+    for i in List:
+        for j in i:
+            if actualRating in j:
+                if i[0] not in foodList:
+                    foodList.append(i[0])
+                        names="-".join(foodList)
+    
+    sendMessage(s,"rabutarb2","Rating:"+names)
+            
+    foodList=[]
+    names=""
+    for i in List:
+        for j in i:
+            if j.isdigit():
+                cap=int(j)
+                    if int(actualCapacity)<cap:
+                        if i[0] not in foodList:
+                            foodList.append(i[0])
+                                names="-".join(foodList)
+    
+    return sendMessage(s,"rabutarb2","Capacity:"+names)
+
+
+def resturants(s,message1):
+    message=message1
+    #message decoded
+    hotel2=message[6:]
+    findColonBeforeUsername=hotel2.find(":")
+    actualHotel=hotel2[:findColonBeforeUsername]
+    username2=message[15+len(actualHotel):]
+    findColonBeforeDate=username2.find(":")
+    actualUsername=username2[:findColonBeforeDate]
+    date2=username2[findColonBeforeDate+6:]
+    findColonBeforeTime=date2.find(":")
+    actualDate=date2[:findColonBeforeTime]
+    time2=date2[findColonBeforeTime+6:]
+    findColonBeforeType=time2.find(":")
+    actualTime=time2[:findColonBeforeType]
+    type2=time2[findColonBeforeType+6:]
+    findColonBeforeCapacity=type2.find(":")
+    actualType=type2[:findColonBeforeCapacity]
+    actualCapacity=type2[findColonBeforeCapacity+10:]
+    #send message to service provider
+    mList=[actualHotel,actualUsername,actualType,actualDate,actualTime,actualCapacity]
+    mString="-".join(mList)
+    return sendMessage(s,"rabutarb3",mString)
+    
 
 def mainFunction(sock):
     message=""
@@ -595,8 +475,12 @@ def mainFunction(sock):
         signUp(sock,message)
     if "venue" in message:
         venue(sock,message)
-    if "hotels" in message:
+    if "hotel" in message:
         hotels(sock,message)
+    if "catering" in message:
+        catering(sock,message)
+    if "restu" in message:
+        resturants(sock,message)
 
 while True:
     mainFunction(s)
